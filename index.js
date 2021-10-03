@@ -3,6 +3,7 @@ import { getLogo } from "./getLogo.js";
 const searchInput = document.querySelector(".js-search-input");
 const searchForm = document.querySelector(".js-search-form");
 const resultContainer = document.querySelector(".js-result-container");
+const exportContainer = document.querySelector(".js-export-button");
 
 searchForm.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -22,13 +23,44 @@ function renderLogo(data) {
   clearContainer();
   resultContainer.classList.add("border-class");
   const logo = document.createElement("img");
-  logo.src = data;
-  resultContainer.appendChild(logo);
+  logo.setAttribute("id", "logo-image");
+  if (/^([\w]+\:)?\/\//.test(data) && data.indexOf(location.host) === -1) {
+    logo.crossOrigin = "anonymous"; // or "use-credentials"
+  }
   
+  let c = document.createElement("canvas");
+  const ctx = c.getContext('2d');
+  logo.onload = () =>{ 
+    c.width = logo.width;
+    c.height = logo.height;
+    ctx.drawImage(logo, 0, 0);
+  }
+  logo.src = data;
+  resultContainer.appendChild(c);
+  const btnDownload = document.createElement("button");
+  btnDownload.innerHTML = "Export as PNG";
+  exportContainer.appendChild(btnDownload);
+  btnDownload.addEventListener("click", () => {
+    if(window.navigator.msSaveBlob){
+      window.navigator.msSaveBlob(c.msToBlob(), "img.png");
+    } else {
+      const a = document.createElement("a");
+      exportContainer.appendChild(a);
+      a.href = c.toDataURL();
+      a.download = "img.png";
+      a.click();
+      exportContainer.removeChild(a);
+    }
+  });
+}
+
+function downloadButton(){
+  exportContainer.removeChild(button);  
 }
 
 function clearContainer() {
   resultContainer.innerHTML = "";
+  exportContainer.innerHTML = "";
 }
 function showFetchingMessage() {
   clearContainer();
